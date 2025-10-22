@@ -10,29 +10,24 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-e#%1ynu0z)!e^@sq5m-ntqow^!93(c$u5qn5ti$w224lay)0pq"
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'rest_framework',
     'weather_analysis.apps.WeatherAnalysisConfig',
+    "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -43,6 +38,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -51,7 +47,53 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:5174", # allow Vite default port
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174", # allow Vite default port
+    "http://localhost:3000", # allow create-react-app default port
+    "http://127.0.0.1:3000", # ensure 127.0.0.1 is also covered
+]
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+
+CORS_ALLOW_CREDENTIALS = True
+
 ROOT_URLCONF = "config.urls"
+# Celery task queue, celery worker will listen to this URL
+CELERY_BROKER_URL = 'redis://localhost:6379/0'        
+# Celery task metadata and result storage, like status[PENDING, STARTED, SUCCESS, FAILURE], progress, result, etc.
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'    
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        # Django cache for analysis results from database, like file hash and analysis results, etc.
+        "LOCATION": "redis://127.0.0.1:6379/2",      
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+# --- AWS Configuration for Boto3 ---
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_REGION = os.getenv('AWS_REGION', 'us-east-1') 
+AWS_S3_BUCKET_NAME = os.getenv('AWS_S3_BUCKET_NAME')  
+AWS_S3_REGION_NAME = os.getenv('AWS_REGION')
+DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'WeatherAnalysisResults')
+
+
 
 TEMPLATES = [
     {
@@ -72,7 +114,6 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
     "default": {

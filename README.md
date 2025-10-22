@@ -65,8 +65,13 @@ docker-compose up -d redis
 ```
 5. Starting the Application
 ```
-##### Assuming your main server file is app.py
-python app.py
+##### start the main server
+python manage.py runserver
 ##### Start the Celery Worker:
 celery -A your_app_module worker -l info
+```
+6. url 
+```
+Upload fiel
+http://127.0.0.1:8000/api/upload/
 ```
