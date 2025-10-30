@@ -48,10 +48,8 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:5174", # allow Vite default port
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174", # allow Vite default port
+    "http://localhost:5173", # allow Vite default port
+    "http://127.0.0.1:5173", 
     "http://localhost:3000", # allow create-react-app default port
     "http://127.0.0.1:3000", # ensure 127.0.0.1 is also covered
 ]
@@ -69,15 +67,13 @@ CORS_ALLOW_METHODS = [
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = "config.urls"
-# Celery task queue, celery worker will listen to this URL
+# Celery and Redis configuration
 CELERY_BROKER_URL = 'redis://localhost:6379/0'        
-# Celery task metadata and result storage, like status[PENDING, STARTED, SUCCESS, FAILURE], progress, result, etc.
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'    
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        # Django cache for analysis results from database, like file hash and analysis results, etc.
         "LOCATION": "redis://127.0.0.1:6379/2",      
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
@@ -85,15 +81,22 @@ CACHES = {
     }
 }
 
-# --- AWS Configuration for Boto3 ---
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_REGION = os.getenv('AWS_REGION', 'us-east-1') 
-AWS_S3_BUCKET_NAME = os.getenv('AWS_S3_BUCKET_NAME')  
-AWS_S3_REGION_NAME = os.getenv('AWS_REGION')
-DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'WeatherAnalysisResults')
+# AWS Configuration
 
+AWS_ACCESS_KEY_ID=''
+AWS_SECRET_ACCESS_KEY=''
+AWS_REGION="us-east-1" 
+AWS_S3_BUCKET_NAME=''
+AWS_S3_REGION_NAME = ''
+DYNAMODB_TABLE_NAME=''
+AWS_DYNAMODB_TABLE_NAME=''
+AWS_DYNAMODB_REGION_NAME=''
+AWS_DYNAMODB_ACCESS_KEY_ID=''
+AWS_DYNAMODB_SECRET_ACCESS_KEY=''
 
+# DynamoDB table names
+DYNAMODB_METADATA_TABLE_NAME = "WeatherAnalysisJobMetadata"
+DYNAMODB_RESULTS_TABLE_NAME = "WeatherAnalysisJobResults"
 
 TEMPLATES = [
     {
@@ -123,9 +126,6 @@ DATABASES = {
 }
 
 
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -141,25 +141,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = "static/"
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
