@@ -1,16 +1,16 @@
 # weather-data-analysis
-Analyzing historical weather data using scikit-learn for forecasting, trend detection, and pattern clustering.
+Analyzing historical weather data using scikit-learn for linear regression analysis, time series extraction, and statistical reporting.
 
 ### Goals and Key Features
 The primary objectives of this application are to provide fast, reliable, and asynchronous data analysis for various weather datasets.
 
-1. File Upload & Storage: Users can upload data files (.csv, .pdf, .xlsx) which are stored securely and durably in AWS S3.
+1. File Upload & Storage: Users can upload data files (.csv, .xlsx, .xls) which are stored securely and durably in AWS S3.
 2. Intelligent Caching: Implemented via Redis, the system checks the file content hash. If the file has been analyzed before, the results are returned instantly from the cache, bypassing the heavy analysis.
 3. Asynchronous Analysis: Long-running analysis tasks are delegated to Celery Workers for background processing, ensuring a responsive user experience.
-4. Machine Learning Analysis: Utilizes scikit-learn for three core analysis tasks:
-  - Forecasting: Predicting tomorrow's temperature based on the past 7 days of data.
-  - Climate Trend Detection: Identifying long-term warming trends (e.g., over 5 years) and detecting extreme temperature spikes.
-  - Clustering: Grouping years with similar weather patterns using the KMeans algorithm.
+4. Machine Learning Analysis: Utilizes scikit-learn for data analysis tasks:
+  - Linear Regression Analysis: Calculates the R² (coefficient of determination) between temperature and humidity to measure their correlation strength.
+  - Time Series Data Extraction: Extracts date and temperature data for visualization purposes.
+  - Statistical Summary Generation: Produces comprehensive reports including record count, date range, and average temperature statistics.
 5. Persistent Results: All analysis findings are stored in AWS DynamoDB for fast retrieval.
 
 ### Technical Stack
@@ -26,15 +26,15 @@ Component	Technology	Role
 - File Upload
 1. The user uploads a file via the front-end.
 2. Cache Check (Redis):
-   - Cache Hit: If the hash exists in Redis, the result is immediately retrieved from DynamoDB and returned.
-   - Cache Miss: The file is uploaded to S3.
+   - Cache Hit: If the file hash exists in Redis cache, the analysis results are immediately returned from Redis (no need to query DynamoDB).
+   - Cache Miss: The file is uploaded to S3, and a Celery task is initiated.
 3. Analysis and Status：
-   - The server immediately returns a 202 Accepted response with the Job ID (which is the file's hash) and status PENDING.
-   - A Celery task is dispatched: analysis_task.delay(s3_path, file_hash).
-   - The Celery Worker downloads the file, performs the ML analysis, stores the results in DynamoDB (key = hash), and updates Redis (key = hash, value = hash).
-4. Retrieving Results (Front-End)
-   - The front-end polls the status endpoint using the Job ID until the analysis is complete.
-   - When the status is COMPLETED, the endpoint fetches the final analysis results from DynamoDB and sends them to the client for display.
+   - On cache miss, the server immediately returns a 202 Accepted response with the Job ID (file hash), Celery ID, and status PENDING.
+   - A Celery task is dispatched: `run_weather_analysis.delay(job_id, s3_key)`.
+   - The Celery Worker downloads the file from S3, performs the ML analysis, stores the results in DynamoDB JobResults table (key = job_id), updates the status in DynamoDB JobMetadata table, and caches the results in Redis (key = `analysis_result_{job_id}` with 24-hour expiration).
+4. Retrieving Results:
+   - The status endpoint uses blocking mode: it waits for the Celery task to complete before returning results.
+   - When the status is SUCCESS, the endpoint fetches the final analysis results from DynamoDB JobResults table and returns them to the client.
 
 ### Installation and Setup
 1. Clone this project
@@ -60,18 +60,20 @@ DYNAMODB_TABLE_NAME=WeatherAnalysisResults
 ```
 4. Running Services (Local)
 ```
-#### Start Redis (Cache and Celery Broker)
-docker-compose up -d redis
+#### Start Redis 
+brew services start redis  
 ```
 5. Starting the Application
 ```
 ##### start the main server
 python manage.py runserver
 ##### Start the Celery Worker:
-celery -A your_app_module worker -l info
+celery -A config worker -l info 
 ```
 6. url 
 ```
-Upload fiel
-http://127.0.0.1:8000/api/upload/
+- `POST /api/v1/upload/` - File upload and job creation
+- `GET /api/v1/status/{job_id}/` - Job status and results
+- `GET /api/v1/job-statuses/` - List of recent jobs
+- `DELETE /api/v1/delete/{job_id}/` - Delete specific job
 ```
