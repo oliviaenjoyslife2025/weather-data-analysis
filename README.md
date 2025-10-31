@@ -71,7 +71,9 @@ brew services start redis
 ##### start the main server
 python manage.py runserver
 ##### Start the Celery Worker:
-celery -A config worker -l info 
+celery -A config worker -l info
+##### Note: Need to initiate frontend as well
+
 ```
 6. url 
 ```
