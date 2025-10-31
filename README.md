@@ -1,6 +1,9 @@
 # weather-data-analysis
 Analyzing historical weather data using scikit-learn for linear regression analysis, time series extraction, and statistical reporting.
 
+### Demo
+![Weather Data Analysis Demo](weather_analysis/assets/demo.gif)
+
 ### Goals and Key Features
 The primary objectives of this application are to provide fast, reliable, and asynchronous data analysis for various weather datasets.
 
